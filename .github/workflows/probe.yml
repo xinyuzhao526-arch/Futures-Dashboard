@@ -8,11 +8,12 @@ permissions:
 jobs:
   probe:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - name: connectivity
         run: |
+          set +e
           UA='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
           {
             echo "=== runner ip ==="
@@ -22,24 +23,25 @@ jobs:
               "https://www.shfe.com.cn/data/tradedata/future/dailydata/kx20261030.dat" \
               "https://www.czce.com.cn/cn/DFSStaticFiles/Future/2026/20261030/FutureDataDaily.txt" \
               "http://www.dce.com.cn/publicweb/quotesdata/dayQuotesCh.html" \
-              "https://www.dce.com.cn/publicweb/quotesdata/dayQuotesCh.html" \
-              "http://www.gfex.com.cn/u/interfacesWebTiDayQuotes/loadList" \
+              "https://www.gfex.com.cn/u/interfacesWebTiDayQuotes/loadList" \
               "https://hq.sinajs.cn/list=nf_RB0" \
               "https://82.push2his.eastmoney.com/api/qt/stock/kline/get?secid=113.rb0&klt=101&lmt=2&fields1=f1&fields2=f51,f53" ; do
-              out=$(curl -sS -m 30 -A "$UA" -H "Referer: https://finance.sina.com.cn" -o /dev/null -w "%{http_code}|%{size_download}|%{time_total}" "$u" 2>&1)
-              echo "  $out  $u"
+              out=$(curl -sS -m 45 -A "$UA" -H "Referer: https://finance.sina.com.cn" -o /dev/null -w "%{http_code}|%{size_download}|%{time_total}" "$u" 2>&1)
+              echo "  ${out}  ${u}"
             done
             echo "=== pip ==="
             python3 -V
-            timeout 90 pip install -q requests 2>&1 | tail -2
-            echo "pip_requests_exit=$?"
+            timeout 120 pip install -q requests 2>&1 | tail -2
+            echo "pip_exit=$?"
+            echo "DONE"
           } > probe_result.txt 2>&1
           cat probe_result.txt
       - name: commit result
+        if: always()
         run: |
           git config user.email "bot@local"
           git config user.name "probe-bot"
-          git add probe_result.txt || true
+          git add -f probe_result.txt || true
           git commit -m "netprobe result" || echo "nothing to commit"
           git push || echo "push failed"
 
