@@ -104,8 +104,7 @@ def build_quotes(universe):
                 oi = float(row.get("p") or 0)
             except (TypeError, ValueError):
                 continue
-            if settle <= 0:
-                settle = close
+            # 结算价缺失（盘中未结算 / 停牌）则不落库，避免以盘中价污染历史序列
             if settle <= 0:
                 continue
             qrows.append({
@@ -128,8 +127,8 @@ def build_snapshot(hist, universe, keep):
             continue
         cur, prev = rows[-1], rows[-2]
         try:
-            settle = float(cur.get("s") or 0) or float(cur.get("c") or 0)
-            prev_settle = float(prev.get("s") or 0) or float(prev.get("c") or 0)
+            settle = float(cur.get("s") or 0)
+            prev_settle = float(prev.get("s") or 0)
             vol = float(cur.get("v") or 0)
             oi = float(cur.get("p") or 0)
             prev_oi = float(prev.get("p") or 0)
