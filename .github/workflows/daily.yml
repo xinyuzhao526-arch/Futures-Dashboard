@@ -1,0 +1,73 @@
+name: daily-structure-update
+
+on:
+  schedule:
+    # UTC 09:40 = 北京时间 17:40，周一至周五（收盘后、交易所结算数据已发布）
+    - cron: '40 9 * * 1-5'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.update-trigger'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-update
+  cancel-in-progress: true
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      FD_BASE: ${{ github.workspace }}/
+      TZ: Asia/Shanghai
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install -q requests pandas numpy
+
+      - name: Fetch quotes and seats
+        run: python scripts/refresh.py
+
+      - name: Guard — coverage must stay complete
+        run: |
+          python - <<'EOF'
+          import csv, sys
+          rows = list(csv.DictReader(open("data/snapshot_latest.csv", encoding="utf-8")))
+          n = len(rows)
+          print(f"coverage: {n} varieties")
+          if n < 70:
+              sys.exit(f"ABORT: only {n} varieties resolved (expected >=70); likely a source outage")
+          asof = sorted({r["variety_code"] for r in rows})
+          missing = [c for c in ("CU", "RB", "M", "I", "AU", "TA", "LC") if c not in asof]
+          if missing:
+              sys.exit(f"ABORT: core varieties missing from snapshot: {missing}")
+          EOF
+
+      - name: Compute indicators
+        run: python scripts/compute.py
+
+      - name: Build page
+        run: python scripts/build.py
+
+      - name: Commit and push
+        run: |
+          git config user.email "dashboard-bot@users.noreply.github.com"
+          git config user.name "dashboard-bot"
+          git add -A
+          if git diff --staged --quiet; then
+            echo "No data change — nothing to publish."
+          else
+            git commit -m "auto update $(date +%Y-%m-%d)"
+            git push
+            echo "Published."
+          fi
