@@ -1,0 +1,19 @@
+=== runner ip ===
+{  "ip": "48.217.55.51",  "city": "Dulles Town Center",  "region": "Virginia",  "country": "US",  "loc": "39.0376,-77.4158",  "org": "AS8075 Microsoft Corporation",  "postal": "20164",  "timezone": "America/New_York",  "readme": "https://ipinfo.io/mi
+=== targets: code|bytes|secs|url ===
+  200|123007|6.088700  https://www.shfe.com.cn/data/tradedata/future/dailydata/kx20261030.dat
+  200|38169|2.507364  https://www.czce.com.cn/cn/DFSStaticFiles/Future/2026/20261030/FutureDataDaily.txt
+  412|2710|1.077971  http://www.dce.com.cn/publicweb/quotesdata/dayQuotesCh.html
+  curl: (60) SSL: no alternative certificate subject name matches target hostname 'www.gfex.com.cn'
+More details here: https://curl.se/docs/sslcerts.html
+
+curl failed to verify the legitimacy of the server and therefore could not
+establish a secure connection to it. To learn more about this situation and
+how to fix it, please visit the webpage mentioned above.
+000|0|0.638821  https://www.gfex.com.cn/u/interfacesWebTiDayQuotes/loadList
+  200|293|0.844045  https://hq.sinajs.cn/list=nf_RB0
+  200|83|1.403617  https://82.push2his.eastmoney.com/api/qt/stock/kline/get?secid=113.rb0&klt=101&lmt=2&fields1=f1&fields2=f51,f53
+=== pip ===
+Python 3.14.4
+pip_exit=0
+DONE
