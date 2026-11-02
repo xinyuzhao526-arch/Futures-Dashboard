@@ -1,7 +1,28 @@
-name: probe
-on: workflow_dispatch
+name: netprobe
+on:
+  workflow_dispatch:
 jobs:
-  t:
+  probe:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - run: echo hi
+      - name: connectivity
+        run: |
+          UA='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
+          echo "=== runner ip ==="
+          curl -sS -m 20 https://ipinfo.io/json | tr -d '\n' | head -c 220; echo
+          echo "=== targets ==="
+          for u in \
+            "https://www.shfe.com.cn/data/tradedata/future/dailydata/kx20261030.dat" \
+            "https://www.czce.com.cn/cn/DFSStaticFiles/Future/2026/20261030/FutureDataDaily.txt" \
+            "http://www.dce.com.cn/publicweb/quotesdata/dayQuotesCh.html" \
+            "https://www.dce.com.cn/publicweb/quotesdata/dayQuotesCh.html" \
+            "http://www.gfex.com.cn/u/interfacesWebTiDayQuotes/loadList" \
+            "https://hq.sinajs.cn/list=nf_RB0" \
+            "https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=113.rb0&klt=101&lmt=2&fields1=f1&fields2=f51,f53" ; do
+            out=$(curl -sS -m 30 -A "$UA" -H "Referer: https://finance.sina.com.cn" -o /tmp/b -w "%{http_code}|%{size_download}|%{time_total}" "$u" 2>&1)
+            echo "$out  $u"
+          done
+          echo "=== pip mirror test ==="
+          timeout 40 pip download --no-deps -d /tmp/pd akshare 2>&1 | tail -2
+
